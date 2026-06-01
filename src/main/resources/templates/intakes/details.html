@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${intake.description} + ' | MedControl'">Детали приема — MedControl</title>
+    <link th:href="@{/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/bootstrap-icons.css}" rel="stylesheet">
+    <link th:href="@{/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<div th:replace="fragments/navbar :: body"></div>
+
+<main class="main-content main-content-narrow">
+    <p class="breadcrumb-text">
+        <a th:if="${param.returnDate}"
+           th:href="@{/intakes/date/{date}(date=${param.returnDate})}">
+            <i class="bi bi-arrow-left me-1"></i> Приемы на дату
+        </a>
+        <a th:unless="${param.returnDate}" th:href="@{/intakes}">
+            <i class="bi bi-arrow-left me-1"></i> Приемы
+        </a>
+    </p>
+
+    <div class="card-custom">
+        <div class="detail-status-bar">
+            <div th:class="${'detail-status-icon status-icon-' + #strings.toLowerCase(intake.intakeStatus)}">
+                <i th:if="${intake.intakeStatus == 'SCHEDULED'}" class="bi bi-clock"></i>
+                <i th:if="${intake.intakeStatus == 'TAKEN'}" class="bi bi-check-circle-fill"></i>
+                <i th:if="${intake.intakeStatus == 'CANCELLED'}" class="bi bi-x-circle-fill"></i>
+                <i th:if="${intake.intakeStatus == 'MISSED'}" class="bi bi-exclamation-circle-fill"></i>
+                <i th:if="${intake.intakeStatus == 'MOVED'}" class="bi bi-arrow-right-circle-fill"></i>
+            </div>
+            <div>
+                <h2 style="font-size: 1.3rem; font-weight: 700; color: #1e293b; margin: 0;" th:text="${intake.description}">Название препарата</h2>
+            </div>
+            <span th:class="${'badge-status badge-' + #strings.toLowerCase(intake.intakeStatus)} + ' ms-auto'"
+                  th:text="${intake.intakeStatus}">STATUS</span>
+        </div>
+
+        <div class="detail-grid" style="margin-top: 20px;">
+            <div class="detail-item">
+                <div class="detail-label">
+                    <i class="bi bi-clock"></i>
+                    <span th:if="${intake.intakeStatus == 'TAKEN'}">Фактическое время приема</span>
+                    <span th:unless="${intake.intakeStatus == 'TAKEN'}">Плановое время</span>
+                </div>
+                <div class="detail-value"
+                     th:classappend="${intake.intakeStatus == 'TAKEN'} ? 'time-actual'">
+                    <span th:if="${intake.intakeStatus == 'TAKEN'}"
+                          th:text="${#temporals.format(intake.takenAt, 'dd MMMM yyyy, HH:mm')}">Факт</span>
+                    <span th:unless="${intake.intakeStatus == 'TAKEN'}"
+                          th:text="${#temporals.format(intake.scheduledAt, 'dd MMMM yyyy, HH:mm')}">План</span>
+                </div>
+                <div th:if="${intake.intakeStatus == 'TAKEN'}" class="detail-sub">
+                    <span style="text-decoration: line-through; color: #94a3b8;">
+                        План: <span th:text="${#temporals.format(intake.scheduledAt, 'HH:mm')}"></span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="detail-item">
+                <div class="detail-label">
+                    <i class="bi bi-capsule"></i> Препарат / описание
+                </div>
+                <div class="detail-value" th:text="${intake.description}">Описание приема</div>
+            </div>
+
+            <div class="detail-item">
+                <div class="detail-label">
+                    <i class="bi bi-flag"></i> Текущий статус
+                </div>
+                <div class="detail-value">
+                    <span th:class="${'intake-status-badge badge-' + #strings.toLowerCase(intake.intakeStatus)}"
+                          th:text="${intake.intakeStatus}">SCHEDULED</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-custom">
+        <h3><i class="bi bi-sliders" style="color: #6366f1;"></i> Действия</h3>
+
+        <div class="status-update-block">
+            <h4><i class="bi bi-arrow-repeat"></i> Изменить статус приема</h4>
+            <div class="intake-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <form th:action="@{/intakes/{id}/intakeStatus(id=${intake.id})}" method="post" class="status-form">
+                    <input type="hidden" name="status" value="TAKEN">
+                    <input type="hidden" name="returnDate" th:value="${param.returnDate}">
+                    <button type="submit" class="action-chip chip-taken" title="Принято">
+                        <i class="bi bi-check-lg"></i> Принято
+                    </button>
+                </form>
+                <form th:action="@{/intakes/{id}/intakeStatus(id=${intake.id})}" method="post" class="status-form">
+                    <input type="hidden" name="status" value="CANCELLED">
+                    <input type="hidden" name="returnDate" th:value="${param.returnDate}">
+                    <button type="submit" class="action-chip chip-cancelled" title="Отменено">
+                        <i class="bi bi-x-lg"></i> Отменено
+                    </button>
+                </form>
+                <form th:action="@{/intakes/{id}/move(id=${intake.id})}" method="post">
+                    <input type="hidden" name="returnDate" th:value="${param.returnDate}">
+                    <button type="submit" class="action-chip chip-move" title="Перенести на 30 мин">
+                        <i class="bi bi-clock-history"></i> Перенести
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div style="margin-top: 16px;">
+            <a th:if="${param.returnDate}"
+               th:href="@{/intakes/date/{date}(date=${param.returnDate})}"
+               class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Назад к списку
+            </a>
+            <a th:unless="${param.returnDate}"
+               th:href="@{/intakes}"
+               class="btn btn-outline-secondary">
+                <i class="bi bi-house me-1"></i> На главную
+            </a>
+        </div>
+    </div>
+
+    <input type="hidden" id="intakeId" th:value="${intake.id}">
+</main>
+
+<script th:src="@{/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/intake-script.js}"></script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройка расписания | MedControl</title>
+    <link th:href="@{/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/bootstrap-icons.css}" rel="stylesheet">
+    <link th:href="@{/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<div th:replace="fragments/navbar :: body"></div>
+
+<main class="main-content">
+    <p class="breadcrumb-text">
+        <a th:href="@{/schemes/all}"><i class="bi bi-arrow-left me-1"></i>Схемы приема</a>
+        <span class="mx-1">/</span>
+        <a th:href="@{/schemes/{id}(id=${schemeModel.id})}" th:text="${schemeModel.name}">Название</a>
+    </p>
+
+    <div class="page-header">
+        <h1>Расписание и уведомления</h1>
+    </div>
+
+    <div class="page-hint">
+        <i class="bi bi-info-circle-fill"></i>
+        После сохранения расписания схема станет активной, и будут рассчитаны приемы.
+    </div>
+
+    <div class="form-card">
+        <form th:action="@{/schemes/{id}/update-schedule(id=${schemeModel.id})}"
+              th:object="${schemeModel}"
+              method="post"
+              id="scheduleForm">
+
+            <input type="hidden" name="schemeType" id="schemeTypeHidden" th:value="${schemeModel.schemeType}">
+
+            <div class="mb-group">
+                <label for="schemeTypeSelector" class="form-label">Тип расписания</label>
+                <select id="schemeTypeSelector" class="form-select" onchange="toggleSchemeTypeFields()">
+                    <option value="ALTERNATION" th:selected="${schemeModel.schemeType == 'ALTERNATION'}">
+                        Чередование (прием / пропуск)
+                    </option>
+                    <option value="WEEKDAYS" th:selected="${schemeModel.schemeType == 'WEEKDAYS'}">
+                        Дни недели
+                    </option>
+                </select>
+            </div>
+
+            <div id="alternationFields" style="display: none;">
+                <div class="row-fields">
+                    <div class="mb-group">
+                        <label for="takeDays" class="form-label">Дней приема</label>
+                        <input type="number" id="takeDays" name="takeDays" min="1"
+                               class="form-control"
+                               th:value="${schemeModel.alternationDays != null ? schemeModel.alternationDays.takeDays : '1'}">
+                    </div>
+                    <div class="mb-group">
+                        <label for="skipDays" class="form-label">Дней пропуска</label>
+                        <input type="number" id="skipDays" name="skipDays" min="0"
+                               class="form-control"
+                               th:value="${schemeModel.alternationDays != null ? schemeModel.alternationDays.skipDays : '0'}">
+                    </div>
+                </div>
+            </div>
+
+            <div id="daysOfWeekFields" style="display: none;">
+                <label class="form-label">Выберите дни недели</label>
+
+                <div class="day-chips" id="dayChips">
+                    <div class="day-chip chip" data-day="MONDAY">Пн</div>
+                    <div class="day-chip chip" data-day="TUESDAY">Вт</div>
+                    <div class="day-chip chip" data-day="WEDNESDAY">Ср</div>
+                    <div class="day-chip chip" data-day="THURSDAY">Чт</div>
+                    <div class="day-chip chip" data-day="FRIDAY">Пт</div>
+                    <div class="day-chip chip" data-day="SATURDAY">Сб</div>
+                    <div class="day-chip chip" data-day="SUNDAY">Вс</div>
+                </div>
+
+            </div>
+
+            <div class="row-fields" style="margin-top: 8px;">
+                <div class="mb-group">
+                    <label for="startDate" class="form-label">Дата начала</label>
+                    <input type="date" id="startDate" name="startDate"
+                           class="form-control"
+                           th:value="${schemeModel.startDate}">
+                </div>
+                <div class="mb-group">
+                    <label for="endDate" class="form-label">Дата окончания <span class="text-muted fw-normal">(опционально)</span></label>
+                    <input type="date" id="endDate" name="endDate"
+                           class="form-control"
+                           th:value="${schemeModel.endDate}">
+                </div>
+            </div>
+
+            <div class="mb-group">
+                <label class="form-label">Время уведомлений</label>
+                <div id="timesList"></div>
+                <button type="button" class="btn-add-time" onclick="addTimeInput()">
+                    <i class="bi bi-plus-lg"></i> Добавить время
+                </button>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-calendar-check me-1"></i> Сохранить расписание
+                </button>
+                <a th:href="@{/schemes/{id}(id=${schemeModel.id})}" class="btn btn-outline-secondary">
+                    Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</main>
+
+<script th:src="@{/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/scheme-script.js}"></script>
+
+</body>
+</html>

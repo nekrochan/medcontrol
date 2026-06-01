@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация | MedControl</title>
+    <link th:href="@{/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/bootstrap-icons.css}" rel="stylesheet">
+    <link th:href="@{/style.css}" rel="stylesheet">
+</head>
+<body class="auth-body">
+
+<div class="auth-wrapper">
+    <div class="auth-brand">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 8px;">
+            <img th:src="@{/icons/badge-icon.png}"
+                 width="24"
+                 height="24">
+            <h1>MedControl</h1>
+        </div>
+        <p>Создание нового аккаунта</p>
+    </div>
+
+    <div class="auth-card">
+        <div th:if="${NonConfirmedPassword}" class="alert-error-custom">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>Пароли не совпадают.</span>
+        </div>
+        <div th:if="${badCredentials}" class="alert-error-custom">
+            <i class="bi bi-person-x-fill"></i>
+            <span>Пользователь с таким именем уже существует.</span>
+        </div>
+
+        <form th:action="@{/register}" method="post" th:object="${userRegistrationDto}" novalidate>
+            <div th:if="${#fields.hasErrors('*')}" class="alert-error-custom">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                <ul>
+                    <li th:each="err : ${#fields.errors('*')}" th:text="${err}"></li>
+                </ul>
+            </div>
+
+            <div class="form-group">
+                <label for="username" class="form-label">Имя пользователя</label>
+                <input type="text" id="username" th:field="*{username}"
+                       class="form-control register-input"
+                       th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'"
+                       required placeholder="Придумайте имя пользователя"
+                       autocomplete="username">
+                <div th:if="${#fields.hasErrors('username')}" class="field-error">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span th:errors="*{username}"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Пароль</label>
+                <input type="password" id="password" th:field="*{password}"
+                       class="form-control register-input"
+                       th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'"
+                       required placeholder="Придумайте надежный пароль"
+                       autocomplete="new-password">
+                <div th:if="${#fields.hasErrors('password')}" class="field-error">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span th:errors="*{password}"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword" class="form-label">Подтвердите пароль</label>
+                <input type="password" id="confirmPassword" th:field="*{confirmPassword}"
+                       class="form-control register-input"
+                       th:classappend="${#fields.hasErrors('confirmPassword')} ? 'is-invalid'"
+                       required placeholder="Повторите пароль"
+                       autocomplete="new-password">
+                <div th:if="${#fields.hasErrors('confirmPassword')}" class="field-error">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span th:errors="*{confirmPassword}"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-auth">
+                <i class="bi bi-person-check"></i> Зарегистрироваться
+            </button>
+        </form>
+    </div>
+
+    <div class="auth-footer">
+        Уже есть аккаунт? <a th:href="@{/login}">Войти</a>
+    </div>
+</div>
+
+<script th:src="@{/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

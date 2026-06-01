@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход | MedControl</title>
+    <link th:href="@{/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/bootstrap-icons.css}" rel="stylesheet">
+    <link th:href="@{/style.css}" rel="stylesheet">
+</head>
+<body class="auth-body">
+
+<div class="auth-wrapper">
+    <div class="auth-brand" >
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 8px;">
+            <img th:src="@{/icons/badge-icon.png}"
+                 width="24"
+                 height="24">
+            <h1>MedControl</h1>
+        </div>
+        <p>Контроль приема препаратов</p>
+    </div>
+
+    <div class="auth-card">
+        <div th:if="${param.error}" class="alert-error-custom">
+            <i class="bi bi-shield-exclamation"></i>
+            <span>Неверное имя пользователя или пароль.</span>
+        </div>
+
+        <div th:if="${registrationSuccess}" class="alert-success-custom">
+            <i class="bi bi-check-circle-fill"></i>
+            <span th:text="${registrationSuccess}">Регистрация прошла успешно. Пожалуйста, войдите.</span>
+        </div>
+
+        <div th:if="${badCredentials}" class="alert-error-custom">
+            <i class="bi bi-lock-fill"></i>
+            <span>Ошибка аутентификации.</span>
+        </div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="form-group">
+                <label for="username" class="form-label">Имя пользователя</label>
+                <input type="text" id="username" name="username"
+                       class="form-control register-input"
+                       required placeholder="Введите имя пользователя"
+                       th:value="${username != null ? username : ''}"
+                       autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Пароль</label>
+                <input type="password" id="password" name="password"
+                       class="form-control register-input"
+                       required placeholder="Введите пароль"
+                       autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn-auth">
+                <i class="bi bi-box-arrow-in-right"></i> Войти
+            </button>
+        </form>
+    </div>
+
+    <div class="auth-footer">
+        Нет аккаунта? <a th:href="@{/register}">Зарегистрироваться</a>
+    </div>
+</div>
+
+<script th:src="@{/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Navbar</title>
+    <link th:href="@{/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/bootstrap-icons.css}" rel="stylesheet">
+    <link th:href="@{/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<button class="mobile-menu-toggle" id="mobileMenuToggle">
+    <i class="bi bi-list"></i>
+</button>
+
+<aside class="sidebar">
+    <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('mobile-open')"></div>
+    <div class="sidebar-brand">
+        <img th:src="@{/icons/badge-icon.png}"
+             width="24"
+             height="24"> MedControl
+    </div>
+
+    <div class="profile-selector">
+        <button class="profile-toggle" type="button" id="profileToggle">
+            <i class="bi bi-person-circle me-2"></i>
+            <span th:text="${activeProfileName != null ? activeProfileName : 'Выберите профиль'}">Профиль</span>
+            <i class="bi bi-chevron-down ms-auto"></i>
+        </button>
+        <div class="profile-menu" id="profileMenu">
+            <th:block th:each="profile : ${profiles}">
+                <form th:action="@{'/profiles/' + ${profile.id} + '/activate'}" method="post">
+                    <button type="submit" class="profile-item" th:text="${profile.profileName}"></button>
+                </form>
+            </th:block>
+            <div class="profile-divider"></div>
+            <button type="button" class="profile-item profile-item-create" id="createProfileBtn">
+                <i class="bi bi-plus-circle me-1"></i> Создать профиль
+            </button>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="sidebar-section-title">Основное</div>
+        <a th:href="@{/intakes}" class="sidebar-link">
+            <i class="bi bi-calendar-check"></i> Приемы сегодня
+        </a>
+        <a th:href="@{/schemes/all}" class="sidebar-link">
+            <i class="bi bi-clipboard2-pulse"></i> Схемы приема
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <button id="enable-notifications-btn" onclick="subscribeToPush()" class="notification-prompt w-100">
+            <i class="bi bi-bell-fill me-2"></i> Включить уведомления
+        </button>
+        <a th:href="@{/user}" class="sidebar-link">
+            <i class="bi bi-gear"></i> Настройки
+        </a>
+        <form id="logout-form" th:action="@{/logout}" method="post">
+            <button type="submit" class="sidebar-link logout-btn w-100 border-0 bg-transparent"
+                    onclick="event.preventDefault(); if(typeof unsubscribeFromPush === 'function') { unsubscribeFromPush().then(() => document.getElementById('logout-form').submit()); } else { document.getElementById('logout-form').submit(); }">
+                <i class="bi bi-box-arrow-right"></i> Выйти
+            </button>
+        </form>
+    </div>
+</aside>
+
+<div class="modal fade" id="create-profile-modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Новый профиль</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/profiles/add}" method="post">
+                <div class="modal-body">
+                    <label for="new-profile-name" class="form-label">Название профиля</label>
+                    <input type="text" id="new-profile-name" name="profileName" class="form-control" required
+                           placeholder="Например: Для командировок">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-success">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/navbar-script.js}"></script>
+<script th:src="@{/push-subscribe.js}"></script>
+</body>
+</html>

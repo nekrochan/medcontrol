@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактирование схемы | MedControl</title>
+    <link th:href="@{/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/bootstrap-icons.css}" rel="stylesheet">
+    <link th:href="@{/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<div th:replace="fragments/navbar :: body"></div>
+
+<main class="main-content">
+    <p class="breadcrumb-text">
+        <a th:href="@{/schemes/all}"><i class="bi bi-arrow-left me-1"></i>Схемы приема</a>
+        <span class="mx-1">/</span>
+        <a th:href="@{/schemes/{id}(id=${schemeModel.id})}" th:text="${schemeModel.name}">Название</a>
+    </p>
+
+    <div class="page-header">
+        <h1>Редактирование схемы</h1>
+    </div>
+
+    <div class="form-card">
+        <form th:action="@{/schemes/{id}/update-info(id=${schemeModel.id})}"
+              th:object="${schemeModel}"
+              method="post"
+              novalidate>
+
+            <div class="mb-group">
+                <label for="name" class="form-label">Название схемы</label>
+                <input type="text"
+                       id="name"
+                       th:field="*{name}"
+                       class="form-control"
+                       required>
+            </div>
+
+            <div class="mb-group">
+                <label for="medicationName" class="form-label">Препарат</label>
+                <input type="text"
+                       id="medicationName"
+                       th:field="*{medicationName}"
+                       class="form-control"
+                       required>
+            </div>
+
+            <div class="row-fields">
+                <div class="mb-group">
+                    <label for="dosage" class="form-label">Дозировка</label>
+                    <input type="number"
+                           step="0.1"
+                           id="dosage"
+                           th:field="*{dosage}"
+                           class="form-control"
+                           required>
+                </div>
+                <div class="mb-group">
+                    <label for="measure" class="form-label">Единица измерения</label>
+                    <input type="text"
+                           id="measure"
+                           th:field="*{measure}"
+                           class="form-control"
+                           placeholder="мг, таб.">
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check2-circle me-1"></i> Сохранить изменения
+                </button>
+                <a th:href="@{/schemes/{id}(id=${schemeModel.id})}" class="btn btn-outline-secondary">
+                    <i class="bi bi-eye me-1"></i> К просмотру
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="danger-zone">
+        <h3><i class="bi bi-exclamation-triangle-fill"></i> Опасная зона</h3>
+        <p>Удаление схемы нельзя отменить. Все связанные данные, включая историю приемов, будут безвозвратно удалены.</p>
+        <form th:action="@{/schemes/{id}/delete(id=${schemeModel.id})}"
+              method="post"
+              onsubmit="return confirm('Вы уверены, что хотите безвозвратно удалить эту схему?');">
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash3 me-1"></i> Удалить схему
+            </button>
+        </form>
+    </div>
+</main>
+
+<script th:src="@{/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/scheme-script.js}"></script>
+</body>
+</html>

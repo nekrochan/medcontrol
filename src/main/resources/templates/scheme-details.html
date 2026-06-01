@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${scheme.name} + ' | MedControl'">Детали схемы / MedControl</title>
+  <link th:href="@{/bootstrap.min.css}" rel="stylesheet">
+  <link th:href="@{/bootstrap-icons.css}" rel="stylesheet">
+  <link th:href="@{/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<div th:replace="fragments/navbar :: body"></div>
+
+<main class="main-content">
+
+  <p class="breadcrumb-text">
+    <a th:href="@{/schemes/all}"><i class="bi bi-arrow-left me-1"></i>Схемы приема</a>
+  </p>
+
+  <div class="page-header">
+    <h1 th:text="${scheme.name}">Название схемы</h1>
+    <span th:class="${'badge rounded-pill fs-6 px-3 py-2 status-badge ' + (scheme.status == 'ACTIVE' ? 'bg-success' : (scheme.status == 'PAUSED' ? 'bg-warning text-dark' : (scheme.status == 'COMPLETED' ? 'bg-primary' : 'bg-danger')))}"
+          th:attr="data-status=${scheme.status}"
+          th:text="${scheme.status}">ACTIVE</span>
+  </div>
+
+  <div th:if="${statistics}" class="card-custom">
+    <h3><i class="bi bi-graph-up" style="color: #10b981;"></i> Статистика по схеме</h3>
+
+    <div th:with="taken=${statistics.takenPart}, cancelled=${statistics.cancelledPart}, remaining=${100 - statistics.takenPart - statistics.cancelledPart}">
+
+      <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">Распределение приемов</div>
+      <div class="progress-stacked" role="progressbar" style="height: 10px; border-radius: 10px; overflow: hidden; background-color: #e2e8f0;">
+        <div class="progress-bar bg-success"
+             th:style="'width: ' + ${taken} + '%'"
+             th:title="'Выполнено: ' + ${#numbers.formatDecimal(taken, 1, 1)} + '%'">
+        </div>
+        <div class="progress-bar bg-danger"
+             th:style="'width: ' + ${cancelled > (100 - taken) ? (100 - taken) : cancelled} + '%'"
+             th:title="'Отменено: ' + ${#numbers.formatDecimal(cancelled, 1, 1)} + '%'">
+        </div>
+      </div>
+
+      <div class="stat-legend" style="display: flex; gap: 20px; margin-top: 12px; font-size: 0.8rem;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="display: inline-block; width: 12px; height: 12px; background-color: #10b981; border-radius: 3px;"></span>
+          <span>Выполнено: <strong th:text="${#numbers.formatDecimal(taken, 1, 1)} + '%'"></strong></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="display: inline-block; width: 12px; height: 12px; background-color: #ef4444; border-radius: 3px;"></span>
+          <span>Отменено: <strong th:text="${#numbers.formatDecimal(cancelled, 1, 1)} + '%'"></strong></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="display: inline-block; width: 12px; height: 12px; background-color: #e2e8f0; border-radius: 3px;"></span>
+          <span>Осталось: <strong th:text="${#numbers.formatDecimal(remaining, 1, 1)} + '%'"></strong></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="card-custom">
+    <h3><i class="bi bi-info-circle" style="color: #6366f1;"></i> Основная информация</h3>
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="label">Препарат</span>
+        <span class="value" th:text="${scheme.medicationName}">—</span>
+      </div>
+      <div class="info-item">
+        <span class="label">Дозировка</span>
+        <span class="value">
+                    <span th:text="${scheme.dosage}">0</span>
+                    <span th:text="${scheme.measure}">мг</span>
+                </span>
+      </div>
+      <div class="info-item">
+        <span class="label">Тип расписания</span>
+        <span class="value scheme-type-value"
+              th:attr="data-scheme-type=${scheme.schemeType}"
+              th:text="${scheme.schemeType}">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-custom">
+    <h3><i class="bi bi-sliders" style="color: #6366f1;"></i> Действия</h3>
+    <div class="actions-row">
+      <a th:href="@{/schemes/{id}/update-info(id=${scheme.id})}" class="btn btn-outline-secondary">
+        <i class="bi bi-pencil me-1"></i> Изменить информацию
+      </a>
+      <a th:href="@{/schemes/{id}/update-schedule(id=${scheme.id})}" class="btn btn-outline-secondary">
+        <i class="bi bi-calendar3 me-1"></i> Изменить расписание
+      </a>
+    </div>
+  </div>
+
+  <div class="card-custom">
+    <h3><i class="bi bi-flag" style="color: #6366f1;"></i> Управление статусом</h3>
+
+    <div class="chip-group">
+      <form th:action="@{/schemes/{id}/update-status(id=${scheme.id})}" method="post" style="display: contents;">
+        <input type="hidden" name="status" value="ACTIVE">
+        <button type="submit"
+                class="chip-btn"
+                th:classappend="${scheme.status == 'ACTIVE'} ? 'chip-active-active'"
+                th:disabled="${scheme.status == 'ACTIVE'}"
+                title="Активна: создаст приемы для схемы">
+          <i class="bi bi-play-fill me-1"></i> Активировать
+        </button>
+      </form>
+
+      <form th:action="@{/schemes/{id}/update-status(id=${scheme.id})}" method="post" style="display: contents;">
+        <input type="hidden" name="status" value="PAUSED">
+        <button type="submit"
+                class="chip-btn"
+                th:classappend="${scheme.status == 'PAUSED'} ? 'chip-paused-active'"
+                th:disabled="${scheme.status == 'PAUSED' or scheme.status == 'INACTIVE' or scheme.status == 'COMPLETED'}"
+                title="Скрыть будущие приемы из расписания и не отправлять уведомления">
+          <i class="bi bi-pause-fill me-1"></i> Приостановить
+        </button>
+      </form>
+
+      <form th:action="@{/schemes/{id}/update-status(id=${scheme.id})}" method="post" style="display: contents;">
+        <input type="hidden" name="status" value="INACTIVE">
+        <button type="submit"
+                class="chip-btn"
+                th:classappend="${scheme.status == 'INACTIVE'} ? 'chip-inactive-active'"
+                th:disabled="${scheme.status == 'INACTIVE'}"
+                title="Удалить все приемы">
+          <i class="bi bi-stop-fill me-1"></i> Отключить
+        </button>
+      </form>
+
+      <form th:action="@{/schemes/{id}/update-status(id=${scheme.id})}" method="post" style="display: contents;">
+        <input type="hidden" name="status" value="COMPLETED">
+        <button type="submit"
+                class="chip-btn"
+                th:classappend="${scheme.status == 'COMPLETED'} ? 'chip-completed-active'"
+                th:disabled="${scheme.status == 'COMPLETED' or scheme.status == 'INACTIVE'}"
+                title="Сохранить историю, удалить оставшиеся будущие приемы">
+          <i class="bi bi-check2-all me-1"></i> Завершить
+        </button>
+      </form>
+    </div>
+
+    <div class="hints-list">
+      <p class="hint">При активации будут созданы приемы для схемы начиная с сегодняшнего дня</p>
+      <p class="hint">Приостановка скроет будущие приемы из расписания и перестанет уведомлять о них</p>
+      <p class="hint">Отключение безвозвратно удалит все приемы</p>
+      <p class="hint">При завершении сохранятся прошедшие приемы, будущие будут безвозвратно удалены</p>
+    </div>
+
+    <div th:if="${scheme.status == 'INACTIVE'}" class="alert-warning-custom">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>Неактивную схему можно только активировать — приостановка и завершение недоступны.</span>
+    </div>
+    <div th:if="${scheme.status == 'COMPLETED'}" class="alert-warning-custom">
+      <i class="bi bi-info-circle-fill"></i>
+      <span>Схема завершена, но ее можно возобновить: будет создана копия с новым периодом, а оригинал останется сохраненным в истории.</span>
+    </div>
+  </div>
+</main>
+
+<script th:src="@{/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/scheme-script.js}"></script>
+</body>
+</html>

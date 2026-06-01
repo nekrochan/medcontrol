@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Схемы приема | MedControl</title>
+    <link th:href="@{/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/bootstrap-icons.css}" rel="stylesheet">
+    <link th:href="@{/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<div th:replace="fragments/navbar">Navbar</div>
+
+<main class="main-content">
+    <div th:if="${statistics}"
+         th:unless="${allSchemes == null or allSchemes.isEmpty()}"
+         class="stat-card">
+        <h2><i class="bi bi-graph-up" style="color: #6366f1;"></i> Комплаентность</h2>
+        <div class="stat-label">Степень приверженности лечению</div>
+        <div class="progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar fw-bold"
+                 th:style="'width: ' + ${statistics.takenPart} + '%'"
+                 th:classappend="${statistics.takenPart >= 98 ? 'bg-success' :
+                                 (statistics.takenPart >= 75 ? 'bg-primary' :
+                                 (statistics.takenPart >= 50 ? 'bg-warning' : 'bg-danger'))}"
+                 th:text="${#numbers.formatDecimal(statistics.takenPart, 1, 1)} + '%'">
+            </div>
+        </div>
+        <div class="stat-average">
+            В среднем: <strong th:text="${#numbers.formatDecimal(statistics.takenPart, 1, 1)} + '%'"></strong>
+        </div>
+    </div>
+
+    <div class="section-header">
+        <h2><i class="bi bi-clipboard2-pulse me-2" style="color: #6366f1;"></i>Схемы приема</h2>
+        <a th:href="@{/schemes/add}" class="btn btn-primary rounded-3 px-4 py-2 fw-semibold">
+            <i class="bi bi-plus-lg me-1"></i> Новая схема
+        </a>
+    </div>
+
+    <div th:if="${allSchemes == null or allSchemes.isEmpty()}" class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p>У вас пока нет созданных схем приема</p>
+    </div>
+
+    <div class="scheme-grid" th:unless="${allSchemes == null or allSchemes.isEmpty()}">
+        <div th:each="scheme : ${allSchemes}" class="scheme-card">
+            <div class="scheme-card-header">
+                <h5 th:text="${scheme.name}">Название</h5>
+                <span th:class="${'badge rounded-pill status-badge ' + (scheme.status == 'ACTIVE' ? 'bg-success' : (scheme.status == 'COMPLETED' ? 'bg-info' : (scheme.status == 'PAUSED' ? 'bg-warning' : 'bg-secondary')))}"
+                      th:attr="data-status=${scheme.status}"
+                      th:text="${scheme.status}">STATUS</span>
+            </div>
+            <div class="scheme-card-body">
+                <p><strong>Препарат:</strong> <span th:text="${scheme.medicationName}">—</span></p>
+                <p><strong>Дозировка:</strong> <span th:text="${scheme.dosage}">0</span> <span th:text="${scheme.measure}">мг</span></p>
+            </div>
+            <div class="scheme-card-footer">
+                <a th:href="@{/schemes/{id}(id=${scheme.id})}" class="btn btn-sm btn-outline-secondary rounded-3">
+                    Подробнее
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script th:src="@{/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/scheme-script.js}"></script>
+</body>
+</html>

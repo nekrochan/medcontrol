@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки пользователя | MedControl</title>
+    <link th:href="@{/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/bootstrap-icons.css}" rel="stylesheet">
+    <link th:href="@{/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<div th:replace="fragments/navbar :: body"></div>
+
+<main class="main-content main-content-wide">
+    <div class="page-header">
+        <h1><i class="bi bi-gear me-2" style="color: #6366f1;"></i>Настройки пользователя</h1>
+    </div>
+
+    <div th:if="${usernameSuccess}" class="alert-success-custom">
+        <i class="bi bi-check-circle-fill"></i> <span th:text="${usernameSuccess}"></span>
+    </div>
+    <div th:if="${usernameError}" class="alert-error-custom">
+        <i class="bi bi-exclamation-circle-fill"></i> <span th:text="${usernameError}"></span>
+    </div>
+    <div th:if="${passwordSuccess}" class="alert-success-custom">
+        <i class="bi bi-check-circle-fill"></i> <span th:text="${passwordSuccess}"></span>
+    </div>
+    <div th:if="${passwordError}" class="alert-error-custom">
+        <i class="bi bi-exclamation-circle-fill"></i> <span th:text="${passwordError}"></span>
+    </div>
+    <div th:if="${profileSuccess}" class="alert-success-custom">
+        <i class="bi bi-check-circle-fill"></i> <span th:text="${profileSuccess}"></span>
+    </div>
+    <div th:if="${profileError}" class="alert-error-custom">
+        <i class="bi bi-exclamation-circle-fill"></i> <span th:text="${profileError}"></span>
+    </div>
+
+    <div class="card-custom">
+        <h3><i class="bi bi-person-badge" style="color: #6366f1;"></i> Данные аккаунта</h3>
+
+        <div th:if="${deleteError}" class="alert-error-custom">
+            <i class="bi bi-exclamation-circle-fill"></i> <span th:text="${deleteError}"></span>
+        </div>
+
+        <div class="account-row">
+            <div class="info-text">
+                Имя пользователя: <strong th:text="${user.username}">Username</strong>
+            </div>
+            <button id="username-edit-btn" class="btn btn-outline-secondary btn-sm" onclick="toggleUsernameEdit()">
+                <i class="bi bi-pencil me-1"></i> Изменить
+            </button>
+        </div>
+        <div id="username-edit-container" class="edit-block" style="display: none;">
+            <form th:action="@{/user/username}" method="post">
+                <input type="text" name="newUsername" class="form-control" placeholder="Новое имя пользователя" required>
+                <div class="btn-row">
+                    <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-lg me-1"></i> Сохранить</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleUsernameEdit()">Отмена</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="account-row">
+            <div class="info-text">
+                Пароль: <strong>••••••••</strong>
+            </div>
+            <button id="password-edit-btn" class="btn btn-outline-secondary btn-sm" onclick="togglePasswordEdit()">
+                <i class="bi bi-pencil me-1"></i> Изменить
+            </button>
+        </div>
+        <div id="password-edit-container" class="edit-block" style="display: none;">
+            <form th:action="@{/user/password}" method="post">
+                <input type="password" name="currentPassword" class="form-control" placeholder="Текущий пароль" required>
+                <input type="password" name="newPassword" class="form-control" placeholder="Новый пароль" required>
+                <input type="password" name="confirmPassword" class="form-control" placeholder="Подтвердите новый пароль" required>
+                <div class="btn-row">
+                    <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-lg me-1"></i> Сохранить</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="togglePasswordEdit()">Отмена</button>
+                </div>
+            </form>
+        </div>
+
+        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+            <button type="button" class="btn btn-danger btn-sm" onclick="openDeleteAccountModal()">
+                <i class="bi bi-trash3 me-1"></i> Удалить аккаунт
+            </button>
+        </div>
+    </div>
+
+    <div class="card-custom">
+        <h3><i class="bi bi-people" style="color: #6366f1;"></i> Профили</h3>
+
+        <div th:if="${user.profiles.isEmpty()}">
+            <p class="text-muted" style="font-size: 0.9rem;">У вас пока нет профилей.</p>
+        </div>
+
+        <div th:unless="${user.profiles.isEmpty()}">
+            <div th:each="profile : ${user.profiles}" class="profile-list-item">
+                <div class="profile-info">
+                    <span class="profile-name" th:text="${profile.profileName}">Название</span>
+                    <span th:if="${profile.default}" class="badge-default">По умолчанию</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button class="btn btn-outline-secondary btn-sm"
+                            th:attr="data-profile-id=${profile.id},data-profile-name=${profile.profileName}"
+                            onclick="openRenameModal(this)">
+                        <i class="bi bi-pencil me-1"></i> Ред.
+                    </button>
+                    <form th:action="@{'/profiles/' + ${profile.id} + '/delete'}" method="post"
+                          onsubmit="return confirm('Вы уверены, что хотите удалить профиль «' + this.closest('.profile-list-item').querySelector('.profile-name').textContent + '»?');"
+                          style="display: contents;">
+                        <button type="submit" class="btn-delete-profile" th:disabled="${profile.default}">
+                            <i class="bi bi-trash3 me-1"></i> Удалить
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 16px;">
+            <button id="addProfileBottomBtn" class="btn btn-primary btn-sm" onclick="openCreateProfileModal()">
+                <i class="bi bi-plus-lg me-1"></i> Добавить профиль
+            </button>
+        </div>
+    </div>
+</main>
+
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom: 1px solid #fecaca; background-color: #fef2f2;">
+                <h5 class="modal-title" style="color: #dc2626;">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Удаление аккаунта
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/user/delete}" method="post">
+                <div class="modal-body">
+                    <div class="alert alert-danger" style="font-size: 0.9rem;">
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                        <strong>Внимание!</strong> Это действие нельзя отменить. Все ваши данные, включая профили,
+                        будут безвозвратно удалены.
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="deletePassword" class="form-label">
+                            Введите ваш пароль для подтверждения:
+                        </label>
+                        <input type="password"
+                               id="deletePassword"
+                               name="password"
+                               class="form-control"
+                               required
+                               placeholder="Ваш текущий пароль"
+                               autofocus>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Отмена
+                    </button>
+                    <button type="submit" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="bi bi-trash3 me-1"></i> Удалить аккаунт
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createProfileModalUser" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Новый профиль</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/profiles/add}" method="post">
+                <div class="modal-body">
+                    <label for="newProfileNameUser" class="form-label">Название профиля</label>
+                    <input type="text" id="newProfileNameUser" name="profileName" class="form-control" required
+                           placeholder="Например: Для поездок" autofocus>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-success">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="renameProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Переименовать профиль</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="renameProfileForm" method="post">
+                <div class="modal-body">
+                    <label for="renameProfileName" class="form-label">Новое название</label>
+                    <input type="text" id="renameProfileName" name="profileName" class="form-control" required autofocus>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-success">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/user-script.js}"></script>
+</body>
+</html>
