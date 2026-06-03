@@ -35,18 +35,29 @@ public class IntakeStatusManager {
         }
     }
 
-    public boolean isAllowed(Intake intake, IntakeStatus targetStatus, LocalDateTime nearestFloor) {
+    public boolean isAllowed(Intake intake, IntakeStatus targetStatus, LocalDateTime nearestFloor, LocalDateTime nearestCeil) {
         IntakeStatus currentStatus = intake.getIntakeStatus();
         SchemeStatus schemeStatus = intake.getScheme().getStatus();
         boolean isScheduledBeforeNearest = intake.getScheduledAt().isBefore(nearestFloor);
         boolean hasTakenAt = (intake.getTakenAt() == null);
+        boolean isNearest = (intake.getScheduledAt().isAfter(nearestFloor) && intake.getScheduledAt().isBefore(nearestCeil));
 
         if (currentStatus == targetStatus) return false;
         if (currentStatus == IntakeStatus.PAUSED) return false;
 
         switch (currentStatus) {
             case SCHEDULED -> {
-                return targetStatus != IntakeStatus.PAUSED || schemeStatus == SchemeStatus.PAUSED;
+                if (isNearest) {
+                    if (targetStatus != IntakeStatus.PAUSED) return true;
+                    if (schemeStatus == SchemeStatus.PAUSED) return true;
+                    return false;
+                }
+                else {
+                    if (targetStatus == IntakeStatus.MOVED) return false;
+                    if (targetStatus != IntakeStatus.PAUSED) return true;
+                    if (schemeStatus == SchemeStatus.PAUSED) return true;
+                    return false;
+                }
             }
             case TAKEN -> {
                 if (targetStatus == IntakeStatus.CANCELLED) return true;
@@ -57,6 +68,7 @@ public class IntakeStatusManager {
                 if (targetStatus == IntakeStatus.TAKEN && hasTakenAt && isScheduledBeforeNearest) return true;
                 if (targetStatus == IntakeStatus.CANCELLED && !hasTakenAt && isScheduledBeforeNearest) return true;
                 if (targetStatus == IntakeStatus.PAUSED && schemeStatus == SchemeStatus.PAUSED) return true;
+                if (targetStatus == IntakeStatus.MOVED) return false;
                 return false;
             }
             case CANCELLED -> {
@@ -70,11 +82,11 @@ public class IntakeStatusManager {
         }
     }
 
-    public void manageMovedIntake(Intake intake, LocalDateTime nearestFloor, LocalDateTime now) throws IllegalArgumentException {
+    public void manageMovedIntake(Intake intake, LocalDateTime nearestFloor, LocalDateTime nearestCeil, LocalDateTime now) throws IllegalArgumentException {
         if (intake.getIntakeStatus() != IntakeStatus.MOVED)
             throw new IllegalArgumentException("Метод manageMovedIntake применим только к приемам в статусе MOVED");
 
-        if (now.isAfter(nearestFloor)) {
+        if (now.isBefore(nearestFloor)) {
             if (intake.getTakenAt() == null) {
                 cancelIntake(intake, nearestFloor, now);
                 log.info("Отмена перенесенного приема вызвана из метода manageMovedIntake");
@@ -85,7 +97,7 @@ public class IntakeStatusManager {
             }
         }
         else {
-            throw new IllegalArgumentException("Прием не удовлетворяет условию: now.isAfter(nearestFloor)");
+            throw new IllegalArgumentException("Прием не удовлетворяет условию: now.isBefore(nearestFloor)");
         }
         intakeRepository.saveAndFlush(intake);
     }
@@ -95,10 +107,12 @@ public class IntakeStatusManager {
             LocalDateTime nearestCeil, LocalDateTime now) throws IllegalArgumentException {
         IntakeStatus currentStatus = intake.getIntakeStatus();
 
-        if (!isAllowed(intake, targetStatus, nearestFloor))
-            throw new IllegalArgumentException("Нельзя изменить статус для приема " + intake.getId().toString() +
-                    ". Исходный статус: " + currentStatus.toString()
-                    + ", назначаемый статус: " + targetStatus.toString());
+        if (!isAllowed(intake, targetStatus, nearestFloor, nearestCeil)) {
+            log.info("Не удалось изменить статус приема {}. Исходный статус: {}, назначаемый статус: {}",
+                    intake.getId(), currentStatus.toString(), targetStatus.toString());
+            throw new IllegalArgumentException("Нельзя изменить статус для приема. Исходный статус: "
+                    + currentStatus.name() + ", назначаемый статус: " + targetStatus.name());
+        }
 
         switch (targetStatus) {
             case SCHEDULED -> {
@@ -134,20 +148,16 @@ public class IntakeStatusManager {
             }
             default -> throw new IllegalArgumentException("Статус не распознан: " + currentStatus.toString());
         }
+        intakeRepository.saveAndFlush(intake);
     }
 
-    public void autoFinalizeIntakeStatus(
-            Intake intake, LocalDateTime nearestFloor, LocalDateTime now
-    ) {
+    public void autoFinalizeIntakeStatus(Intake intake, LocalDateTime nearestFloor, LocalDateTime nearestCeil, LocalDateTime now) {
         IntakeStatus currentStatus = intake.getIntakeStatus();
 
         if (currentStatus == IntakeStatus.MOVED) {
             try {
-                manageMovedIntake(intake, nearestFloor, now);
-                log.info(
-                        "Автозавершение приема {} в статусе MOVED, вызов метода manageMovedIntake",
-                        intake.getId().toString()
-                );
+                manageMovedIntake(intake, nearestFloor, nearestCeil, now);
+                log.info("Автозавершение приема {} в статусе MOVED, вызов метода manageMovedIntake", intake.getId().toString());
             } catch (IllegalArgumentException e) {
                 log.info("Не удалось завершить прием автоматически: {}", e.getMessage());
             }
@@ -181,7 +191,7 @@ public class IntakeStatusManager {
 
     private void performIntake(Intake intake, LocalDateTime nearestFloor, LocalDateTime nearestCeil, LocalDateTime now) throws IllegalArgumentException {
         IntakeStatus currentStatus = intake.getIntakeStatus();
-        boolean isNearest = intake.getScheduledAt().isAfter(nearestFloor) 
+        boolean isNearest = intake.getScheduledAt().isAfter(nearestFloor)
                 && intake.getScheduledAt().isBefore(nearestCeil);
 
         switch (currentStatus) {
@@ -191,13 +201,17 @@ public class IntakeStatusManager {
                 }
                 else {
                     intake.setTakenAt(now);
+                    intake.setIntakeStatus(IntakeStatus.TAKEN);
+                    intakeRepository.saveAndFlush(intake);
                 }
             }
             case SCHEDULED -> {
                 if (isNearest) {
                     intake.setTakenAt(now);
                 }
-                else intake.setTakenAt(intake.getScheduledAt());
+                else {
+                    intake.setTakenAt(intake.getScheduledAt());
+                }
             }
             case MOVED -> {
                 intake.setTakenAt(now);
@@ -206,10 +220,10 @@ public class IntakeStatusManager {
                     "Нельзя перевести прием из статуса " + intake.getIntakeStatus() + " в TAKEN"
             );
         }
-
+        intake.setIntakeStatus(IntakeStatus.TAKEN);
+        intakeRepository.saveAndFlush(intake);
         log.info("Прием {} в статусе {} помечен как выполненный в {}", intake.getId().toString(), currentStatus.toString(), intake.getTakenAt());
 
-        intakeRepository.saveAndFlush(intake);
     }
 
     private void moveIntake(

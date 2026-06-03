@@ -15,7 +15,6 @@ import org.medcontrol.dto.response.UserResponseDto;
 import org.medcontrol.entity.User;
 import org.medcontrol.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -142,7 +141,8 @@ public class UserServiceImpl implements UserService {
         return userRepository.existsByUsername(username);
     }
 
-    public User getUserOrThrow(String username) {
+    @Override
+    public User getUser(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
     }

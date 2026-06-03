@@ -130,7 +130,7 @@ public class ProfileServiceImpl implements ProfileService {
                     if (!p1.isDefault() && p2.isDefault()) return 1;
                     return p1.getName().compareToIgnoreCase(p2.getName());
                 })
-                .map(this::profileToDto)
+                .map(this::getProfileResponseDto)
                 .collect(Collectors.toList());
     }
 
@@ -141,6 +141,7 @@ public class ProfileServiceImpl implements ProfileService {
 
     }
 
+    @Override
     public ProfileStatisticResponseDto getProfileStatistics(String profileId) {
         UUID profileUuid = UUID.fromString(profileId);
 
@@ -169,7 +170,8 @@ public class ProfileServiceImpl implements ProfileService {
         return dto;
     }
 
-    public ProfileResponseDto profileToDto(Profile profile) {
+    @Override
+    public ProfileResponseDto getProfileResponseDto(Profile profile) {
         ProfileResponseDto dto = new ProfileResponseDto();
         dto.setId(profile.getId().toString());
         dto.setProfileName(profile.getName());

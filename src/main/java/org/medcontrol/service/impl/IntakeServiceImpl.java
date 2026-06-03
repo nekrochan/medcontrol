@@ -115,13 +115,7 @@ public class IntakeServiceImpl implements IntakeService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime nearestBottom = now.minusMinutes(nearestHalfRange);
         LocalDateTime nearestCeil = now.plusMinutes(nearestHalfRange);
-        try {
-            intakeStatusManager.updateIntakeStatusManually(
-                    intake, targetStatus, nearestBottom, nearestCeil, now
-            );
-        } catch (IllegalArgumentException e) {
-            log.info("Не удалось перенести прием: {}", e.getMessage());
-        }
+        intakeStatusManager.updateIntakeStatusManually(intake, targetStatus, nearestBottom, nearestCeil, now);
         intakeRepository.saveAndFlush(intake);
 
         return intakeHelper.entityToResponseDto(intake);
@@ -290,31 +284,34 @@ public class IntakeServiceImpl implements IntakeService {
     public void autoFinalizeNearestIntakes() {
         log.info("Проверка ближайших приемов (каждые {} секунд)", 10);
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime outOfNearest = now.minusMinutes(nearestHalfRange);
-        int countFinalizingMoved = intakeRepository
-                .countByScheduledAtBeforeAndIntakeStatus(outOfNearest, IntakeStatus.MOVED);
-        int countFinalizingScheduled = intakeRepository
-                .countByScheduledAtBeforeAndIntakeStatus(outOfNearest, IntakeStatus.SCHEDULED);
+        LocalDateTime nearestBottom = now.minusMinutes(nearestHalfRange);
+        LocalDateTime nearestCeil = now.plusMinutes(nearestHalfRange);
+
+        int countFinalizingMoved = intakeRepository.countByScheduledAtBeforeAndIntakeStatus(nearestBottom, IntakeStatus.MOVED);
+        int countFinalizingScheduled = intakeRepository.countByScheduledAtBeforeAndIntakeStatus(nearestBottom, IntakeStatus.SCHEDULED);
 
         if (countFinalizingMoved!=0) {
             log.info("Будет отмечено {} приемов в статусе MOVED", countFinalizingMoved);
             List<Intake> movedToFinalize = intakeRepository
-                    .findByScheduledAtBeforeAndIntakeStatus(outOfNearest, IntakeStatus.MOVED);
+                    .findByScheduledAtBeforeAndIntakeStatus(nearestBottom, IntakeStatus.MOVED);
 
-            for (Intake intake : movedToFinalize)
-                intakeStatusManager.autoFinalizeIntakeStatus(intake, outOfNearest, now);
-            int countFinalizingMovedNew = intakeRepository.countByScheduledAtBeforeAndIntakeStatus(outOfNearest, IntakeStatus.MOVED);
+
+            for (Intake intake : movedToFinalize) {
+                intakeStatusManager.autoFinalizeIntakeStatus(intake, nearestBottom, nearestCeil, now);
+            }
+            int countFinalizingMovedNew = intakeRepository.countByScheduledAtBeforeAndIntakeStatus(nearestBottom, IntakeStatus.MOVED);
             log.info("Приемов в статусе MOVED уменьшилось на {}", countFinalizingMoved-countFinalizingMovedNew);
         }
 
         if (countFinalizingScheduled != 0) {
             log.info("Будет отмечено {} приемов в статусе SCHEDULED", countFinalizingScheduled);
             List<Intake> scheduledToToFinalize = intakeRepository
-                    .findByScheduledAtBeforeAndIntakeStatus(outOfNearest, IntakeStatus.SCHEDULED);
+                    .findByScheduledAtBeforeAndIntakeStatus(nearestBottom, IntakeStatus.SCHEDULED);
 
-            for (Intake intake : scheduledToToFinalize)
-                intakeStatusManager.autoFinalizeIntakeStatus(intake, outOfNearest, now);
-            int countFinalizingScheduledNew = intakeRepository.countByScheduledAtBeforeAndIntakeStatus(outOfNearest, IntakeStatus.SCHEDULED);
+            for (Intake intake : scheduledToToFinalize) {
+                intakeStatusManager.autoFinalizeIntakeStatus(intake, nearestBottom, nearestCeil, now);
+            }
+            int countFinalizingScheduledNew = intakeRepository.countByScheduledAtBeforeAndIntakeStatus(nearestBottom, IntakeStatus.SCHEDULED);
             log.info("Приемов в статусе MOVED уменьшилось на {}", countFinalizingScheduled-countFinalizingScheduledNew);
         }
     }

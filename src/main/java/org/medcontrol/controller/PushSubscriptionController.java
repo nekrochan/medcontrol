@@ -47,7 +47,7 @@ public class PushSubscriptionController {
             return ResponseEntity.badRequest().body("Invalid subscription data");
         }
 
-        User user = userService.getUserOrThrow(userDetails.getUsername());
+        User user = userService.getUser(userDetails.getUsername());
 
         if (!subscriptionRepository.existsByEndpoint(endpoint)) {
             PushSubscriptionEntity entity = new PushSubscriptionEntity(endpoint, p256dh, auth, user);

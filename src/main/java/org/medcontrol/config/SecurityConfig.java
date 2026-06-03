@@ -66,18 +66,10 @@ public class SecurityConfig {
                                 "/style.css",
                                 "/user-script.js",
                                 "/navbar-script.js",
-                                "/api/push/public-key",
-                                "/sw.js",
-                                "/manifest.json"
+                                "/api/push/public-key"
                         ).permitAll()
 
                         .requestMatchers("/actuator/**").permitAll()
-
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
 
                         .anyRequest().authenticated()
                 )

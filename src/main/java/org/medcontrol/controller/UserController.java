@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 
 @Controller
 public class UserController {
-
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
     private UserServiceImpl userService;
     private AuthenticationManager authenticationManager;
@@ -108,7 +107,7 @@ public class UserController {
             UserResponseDto newUser = this.userService.createUser(registerRequestDto);
             log.info("Пользователь {} успешно создан", registerRequestDto.getUsername());
 
-            User user = userService.getUserOrThrow(registerRequestDto.getUsername());
+            User user = userService.getUser(registerRequestDto.getUsername());
 
             Profile defaultProfile = user.getProfiles().stream()
                     .filter(Profile::isDefault)
@@ -222,7 +221,7 @@ public class UserController {
         log.info("Context path: {}", request.getContextPath());
 
         String username = principal.getName();
-        User user = userService.getUserOrThrow(username);
+        User user = userService.getUser(username);
 
         HttpSession session = request.getSession(false);
         String activeProfileId;
@@ -283,7 +282,7 @@ public class UserController {
         }
 
         try {
-            User user = userService.getUserOrThrow(currentUsername);
+            User user = userService.getUser(currentUsername);
 
             if (userService.isUsernameTaken(newUsername)) {
                 redirectAttributes.addFlashAttribute("usernameError",
@@ -386,7 +385,7 @@ public class UserController {
         String username = principal.getName();
 
         try {
-            User user = userService.getUserOrThrow(username);
+            User user = userService.getUser(username);
 
             if (user == null) {
                 redirectAttributes.addFlashAttribute("deleteError",

@@ -14,8 +14,8 @@ import org.medcontrol.entity.Scheme;
 import org.medcontrol.entity.enums.SchemeType;
 import org.medcontrol.entity.keepers.AlternationDaysKeeper;
 import org.medcontrol.entity.keepers.WeekdaysKeeper;
-import org.medcontrol.service.impl.ProfileServiceImpl;
-import org.medcontrol.service.impl.SchemeServiceImpl;
+import org.medcontrol.service.ProfileService;
+import org.medcontrol.service.SchemeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,11 +39,11 @@ import java.util.stream.Collectors;
 public class SchemeController {
 
     private static final Logger log = LoggerFactory.getLogger(SchemeController.class);
-    private final SchemeServiceImpl schemeService;
-    private final ProfileServiceImpl profileService;
+    private final SchemeService schemeService;
+    private final ProfileService profileService;
 
     @Autowired
-    public SchemeController(SchemeServiceImpl schemeService, ProfileServiceImpl profileService) {
+    public SchemeController(SchemeService schemeService, ProfileService profileService) {
         this.schemeService = schemeService;
         this.profileService = profileService;
     }

@@ -6,7 +6,7 @@ import org.medcontrol.entity.enums.IntakeStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.medcontrol.dto.response.IntakeResponseDto;
-import org.medcontrol.service.impl.IntakeServiceImpl;
+import org.medcontrol.service.IntakeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
@@ -25,10 +25,10 @@ import java.util.stream.Collectors;
 public class IntakeController {
 
     @Autowired
-    private IntakeServiceImpl intakeService;
+    private IntakeService intakeService;
     private static final Logger log = LoggerFactory.getLogger(IntakeController.class);
 
-    public IntakeController(IntakeServiceImpl intakeService) {
+    public IntakeController(IntakeService intakeService) {
         this.intakeService = intakeService;
     }
 

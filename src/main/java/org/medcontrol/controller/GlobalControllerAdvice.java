@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpSession;
 import org.medcontrol.dto.ProfileDto;
 import org.medcontrol.entity.Profile;
 import org.medcontrol.entity.User;
-import org.medcontrol.service.impl.ProfileServiceImpl;
+import org.medcontrol.service.ProfileService;
 import org.medcontrol.service.impl.UserServiceImpl;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -17,9 +17,9 @@ import java.util.stream.Collectors;
 public class GlobalControllerAdvice {
 
     private final UserServiceImpl userService;
-    private final ProfileServiceImpl profileService;
+    private final ProfileService profileService;
 
-    public GlobalControllerAdvice(UserServiceImpl userService, ProfileServiceImpl profileService) {
+    public GlobalControllerAdvice(UserServiceImpl userService, ProfileService profileService) {
         this.userService = userService;
         this.profileService = profileService;
     }
@@ -31,7 +31,7 @@ public class GlobalControllerAdvice {
         }
 
         try {
-            User user = userService.getUserOrThrow(principal.getName());
+            User user = userService.getUser(principal.getName());
             return user.getProfiles().stream()
                     .map(profile -> {
                         ProfileDto dto = new ProfileDto();

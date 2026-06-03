@@ -43,7 +43,6 @@ public class SchemeServiceImpl implements SchemeService {
     private final SchemeHelper schemeHelper;
     private final SchemeValidator schemeValidator;
     private IntakeStatusManager intakeStatusManager;
-    private IntakeHelper intakeHelper;
     private final int nearestHalfRange;
 
     @Autowired
@@ -66,7 +65,6 @@ public class SchemeServiceImpl implements SchemeService {
         this.schemeHelper = schemeHelper;
         this.schemeValidator = schemeValidator;
         this.intakeStatusManager = intakeStatusManager;
-        this.intakeHelper = intakeHelper;
         this.nearestHalfRange = intakeHelper.getNearestHalfRange();
     }
 

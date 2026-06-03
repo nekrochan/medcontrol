@@ -14,8 +14,8 @@ import java.util.UUID;
 @Component
 public class IntakeHelper {
 
-    private final int minutesToMove = 1;
-    private final int nearestHalfRange = 3;
+    private final int minutesToMove = 15;
+    private final int nearestHalfRange = 15;
 
     private IntakeRepository intakeRepository;
 

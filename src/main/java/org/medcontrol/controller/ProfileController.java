@@ -7,8 +7,8 @@ import org.medcontrol.dto.request.CreateProfileRequestDto;
 import org.medcontrol.dto.response.*;
 import org.medcontrol.entity.Profile;
 import org.medcontrol.entity.User;
-import org.medcontrol.service.impl.ProfileServiceImpl;
-import org.medcontrol.service.impl.UserServiceImpl;
+import org.medcontrol.service.ProfileService;
+import org.medcontrol.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -26,10 +26,10 @@ import java.util.stream.Collectors;
 public class ProfileController {
 
     private static final Logger log = LoggerFactory.getLogger(ProfileController.class);
-    private final ProfileServiceImpl profileService;
-    private final UserServiceImpl userService;
+    private final ProfileService profileService;
+    private final UserService userService;
 
-    public ProfileController(ProfileServiceImpl profileService, UserServiceImpl userService) {
+    public ProfileController(ProfileService profileService, UserService userService) {
         this.profileService = profileService;
         this.userService = userService;
     }
@@ -37,7 +37,7 @@ public class ProfileController {
     @GetMapping
     public String getAllProfiles(Principal principal, Model model) {
         String username = principal.getName();
-        User user = userService.getUserOrThrow(username);
+        User user = userService.getUser(username);
 
         List<Profile> profiles = user.getProfiles();
         List<ProfileDto> profileDtos = profiles.stream()
@@ -78,7 +78,7 @@ public class ProfileController {
         }
 
         try {
-            User user = userService.getUserOrThrow(principal.getName());
+            User user = userService.getUser(principal.getName());
             CreateProfileRequestDto dto = new CreateProfileRequestDto();
             dto.setUserId(user.getId().toString());
             dto.setProfileName(profileModel.getProfileName());
@@ -143,7 +143,7 @@ public class ProfileController {
 
         try {
             Profile profile = profileService.getProfileById(profileId);
-            ProfileResponseDto profileResponseDto = profileService.profileToDto(profile);
+            ProfileResponseDto profileResponseDto = profileService.getProfileResponseDto(profile);
 
             if (profile.isDefault()) {
                 log.warn("Попытка удаления дефолтного профиля: {}", profileId);
