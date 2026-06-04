@@ -208,9 +208,11 @@ public class IntakeStatusManager {
             case SCHEDULED -> {
                 if (isNearest) {
                     intake.setTakenAt(now);
+                    intake.setIntakeStatus(IntakeStatus.TAKEN);
                 }
                 else {
                     intake.setTakenAt(intake.getScheduledAt());
+                    intake.setIntakeStatus(IntakeStatus.TAKEN);
                 }
             }
             case MOVED -> {
