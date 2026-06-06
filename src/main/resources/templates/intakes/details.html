@@ -85,26 +85,48 @@
         <div class="status-update-block">
             <h4><i class="bi bi-arrow-repeat"></i> Изменить статус приема</h4>
             <div class="intake-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <form th:action="@{/intakes/{id}/intakeStatus(id=${intake.id})}" method="post" class="status-form">
+
+                <form th:unless="${intake.intakeStatus == 'TAKEN'}"
+                      th:action="@{/intakes/{id}/intakeStatus(id=${intake.id})}"
+                      method="post"
+                      class="status-form">
                     <input type="hidden" name="status" value="TAKEN">
                     <input type="hidden" name="returnDate" th:value="${param.returnDate}">
                     <button type="submit" class="action-chip chip-taken" title="Принято">
                         <i class="bi bi-check-lg"></i> Принято
                     </button>
                 </form>
-                <form th:action="@{/intakes/{id}/intakeStatus(id=${intake.id})}" method="post" class="status-form">
+
+                <form th:unless="${intake.intakeStatus == 'CANCELLED'}"
+                      th:action="@{/intakes/{id}/intakeStatus(id=${intake.id})}"
+                      method="post"
+                      class="status-form">
                     <input type="hidden" name="status" value="CANCELLED">
                     <input type="hidden" name="returnDate" th:value="${param.returnDate}">
                     <button type="submit" class="action-chip chip-cancelled" title="Отменено">
                         <i class="bi bi-x-lg"></i> Отменено
                     </button>
                 </form>
-                <form th:action="@{/intakes/{id}/move(id=${intake.id})}" method="post">
+
+                <form th:if="${isNearest and intake.intakeStatus != 'MOVED'}"
+                      th:action="@{/intakes/{id}/move(id=${intake.id})}"
+                      method="post">
                     <input type="hidden" name="returnDate" th:value="${param.returnDate}">
-                    <button type="submit" class="action-chip chip-move" title="Перенести на 30 мин">
+                    <button type="submit" class="action-chip chip-move" title="Перенести на 15 мин">
                         <i class="bi bi-clock-history"></i> Перенести
                     </button>
                 </form>
+
+                <form th:if="${!isNearest and (intake.intakeStatus == 'TAKEN' or intake.intakeStatus == 'CANCELLED') and intake.scheduledAt.isAfter(#temporals.createNow())}"
+                      th:action="@{/intakes/{id}/intakeStatus(id=${intake.id})}"
+                      method="post">
+                    <input type="hidden" name="status" value="SCHEDULED">
+                    <input type="hidden" name="returnDate" th:value="${param.returnDate}">
+                    <button type="submit" class="action-chip chip-scheduled" title="Вернуть в запланированное">
+                        <i class="bi bi-clock"></i> Запланировано
+                    </button>
+                </form>
+
             </div>
         </div>
 
