@@ -288,6 +288,134 @@ function translateSchemeTypes() {
     });
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('schemeForm');
+    if (!form) return;
+
+    let alertContainer = document.querySelector('.form-card');
+    if (alertContainer && !document.getElementById('duplicateErrorAlert')) {
+        const alertDiv = document.createElement('div');
+        alertDiv.id = 'duplicateErrorAlert';
+        alertDiv.className = 'alert alert-danger alert-dismissible fade';
+        alertDiv.role = 'alert';
+        alertDiv.style.display = 'none';
+        alertDiv.innerHTML = `
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Ошибка!</strong> Схема с таким названием уже существует в профиле.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        alertContainer.insertBefore(alertDiv, form);
+    }
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const url = form.action;
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Сохранение...';
+
+        const alertDiv = document.getElementById('duplicateErrorAlert');
+        if (alertDiv) {
+            alertDiv.style.display = 'none';
+            alertDiv.classList.remove('show');
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const result = await response.json();
+                    if (result.redirectUrl) {
+                        window.location.href = result.redirectUrl;
+                    } else if (result.success && result.schemeId) {
+                        window.location.href = `/schemes/${result.schemeId}/schedule`;
+                    } else {
+                        window.location.href = '/schemes/all';
+                    }
+                } else {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        const text = await response.text();
+                        window.location.href = '/schemes/all';
+                    }
+                }
+            } else if (response.status === 400) {
+                const errorData = await response.json().catch(() => null);
+
+                if (errorData && errorData.message &&
+                    errorData.message.includes('Схема с таким названием уже существует')) {
+
+                    if (alertDiv) {
+                        alertDiv.style.display = 'block';
+                        alertDiv.classList.add('show');
+                    }
+
+                    const nameInput = document.getElementById('name');
+                    if (nameInput) {
+                        nameInput.classList.add('is-invalid');
+
+                        let errorSpan = document.getElementById('nameDuplicateError');
+                        if (!errorSpan) {
+                            errorSpan = document.createElement('span');
+                            errorSpan.id = 'nameDuplicateError';
+                            errorSpan.className = 'error-msg';
+                            nameInput.parentNode.appendChild(errorSpan);
+                        }
+                        errorSpan.textContent = 'Схема с таким названием уже существует в профиле';
+                        errorSpan.style.display = 'block';
+
+                        nameInput.addEventListener('input', function() {
+                            nameInput.classList.remove('is-invalid');
+                            if (errorSpan) errorSpan.style.display = 'none';
+                        }, { once: true });
+                    }
+
+                    alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    showGenericError('Ошибка валидации формы. Проверьте правильность заполнения полей.');
+                }
+            } else {
+                showGenericError('Произошла ошибка при создании схемы. Пожалуйста, попробуйте позже.');
+            }
+        } catch (error) {
+            console.error('Ошибка при отправке формы:', error);
+            showGenericError('Сетевая ошибка. Проверьте соединение и попробуйте снова.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }
+    });
+
+    function showGenericError(message) {
+        const alertDiv = document.getElementById('duplicateErrorAlert');
+        if (alertDiv) {
+            alertDiv.innerHTML = `
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong>Ошибка!</strong> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            alertDiv.style.display = 'block';
+            alertDiv.classList.add('show');
+            alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            alert(message);
+        }
+    }
+});
+
 window.toggleSchemeTypeFields = toggleSchemeTypeFields;
 window.initDayChips = initDayChips;
 window.addTimeInput = addTimeInput;
