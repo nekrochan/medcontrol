@@ -24,14 +24,16 @@
 
             <div class="date-nav">
                 <a th:href="@{'/intakes/date/' + ${date.minusDays(1)}}" class="btn-date">
-                    <i class="bi bi-chevron-left me-1"></i> Вчера
+                    <i class="bi bi-chevron-left me-1"></i>
+                    <span th:text="${#temporals.format(date, 'yyyy-MM-dd') == #temporals.format(#temporals.createNow(), 'yyyy-MM-dd')} ? 'Вчера' : 'Назад'">Вчера</span>
                 </a>
                 <a th:href="@{/intakes}"
                    th:class="${#temporals.format(date, 'yyyy-MM-dd') == #temporals.format(#temporals.createNow(), 'yyyy-MM-dd')} ? 'btn-date active-date' : 'btn-date'">
                     Сегодня
                 </a>
                 <a th:href="@{'/intakes/date/' + ${date.plusDays(1)}}" class="btn-date">
-                    Завтра <i class="bi bi-chevron-right ms-1"></i>
+                    <span th:text="${#temporals.format(date, 'yyyy-MM-dd') == #temporals.format(#temporals.createNow(), 'yyyy-MM-dd')} ? 'Завтра' : 'Вперед'">Завтра</span>
+                    <i class="bi bi-chevron-right ms-1"></i>
                 </a>
                 <button type="button" class="btn-date" id="calendarBtn">
                     <i class="bi bi-calendar3"></i> Календарь
