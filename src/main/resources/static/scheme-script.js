@@ -5,6 +5,12 @@ const statusTranslations = {
     'INACTIVE': 'Неактивна'
 };
 
+const schemeTypeTranslations = {
+    'ALTERNATION': 'Чередование',
+    'WEEKDAYS': 'Дни недели',
+    'UNSPECIFIED': 'Не указан'
+};
+
 var existingAlarms = [];
 var existingDays = '';
 
@@ -25,6 +31,19 @@ function translateSchemeStatuses() {
                     badge.classList.remove('bg-info');
                     badge.classList.add('bg-primary');
                 }
+            }
+        }
+    });
+}
+
+function translateSchemeTypes() {
+    const schemeTypeElements = document.querySelectorAll('.scheme-type-value');
+    schemeTypeElements.forEach(function(element) {
+        const originalType = element.getAttribute('data-scheme-type');
+        if (originalType && schemeTypeTranslations[originalType]) {
+            const translatedText = schemeTypeTranslations[originalType];
+            if (element.textContent !== translatedText) {
+                element.textContent = translatedText;
             }
         }
     });
@@ -68,7 +87,6 @@ function initDayChips() {
         chip.addEventListener('click', dayChipClickHandler);
         chip.style.cursor = 'pointer';
         chip.style.userSelect = 'none';
-
     });
 
     updateSelectedDays();
@@ -122,16 +140,16 @@ function loadExistingTimes() {
     const timesList = document.getElementById('timesList');
     if (!timesList) return;
 
-    const existingTimes = window.existingNotificationTimes || [];
+    timesList.innerHTML = '';
+
+    const existingTimes = existingAlarms || [];
 
     if (existingTimes.length > 0) {
         existingTimes.forEach(time => {
             addTimeInput(time);
         });
     } else {
-        if (timesList.children.length === 0) {
-             addTimeInput('08:00');
-        }
+        addTimeInput('');
     }
 }
 
@@ -180,6 +198,12 @@ function validateProgressBar() {
 
 function highlightExistingDays() {
     if (!existingDays) return;
+
+    const allChips = document.querySelectorAll('.day-chip');
+    allChips.forEach(chip => {
+        chip.classList.remove('selected');
+    });
+
     var days = existingDays.split(',');
     var chips = document.querySelectorAll('.day-chip');
     chips.forEach(function(chip) {
@@ -189,14 +213,96 @@ function highlightExistingDays() {
     });
 }
 
+function showGenericError(message) {
+    const alertDiv = document.getElementById('duplicateErrorAlert');
+    if (alertDiv) {
+        alertDiv.innerHTML = `
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Ошибка!</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        alertDiv.style.display = 'block';
+        alertDiv.classList.add('show');
+        alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+        alert(message);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
 
-    existingAlarms = [];
-    existingDays = '';
-    window.existingNotificationTimes = existingAlarms.map(function(time) {
-        return typeof time === 'string' ? time : time.toString();
-    });
-    highlightExistingDays();
+    const form = document.getElementById('scheduleForm');
+
+    if (form) {
+        const notificationTimesAttr = form.getAttribute('data-notification-times');
+        console.log('Raw notification times attribute:', notificationTimesAttr);
+
+        const notificationTimesInput = document.getElementById('notificationTimes');
+        console.log('Notification times hidden input value:', notificationTimesInput ? notificationTimesInput.value : 'not found');
+
+        if (notificationTimesAttr && notificationTimesAttr !== '') {
+            existingAlarms = notificationTimesAttr.split(',').filter(t => t && t.trim() !== '');
+            console.log('Parsed notification times from data attribute:', existingAlarms);
+        } else if (notificationTimesInput && notificationTimesInput.value && notificationTimesInput.value !== '') {
+            existingAlarms = notificationTimesInput.value.split(',').filter(t => t && t.trim() !== '');
+            console.log('Parsed notification times from hidden input:', existingAlarms);
+        } else {
+            existingAlarms = [];
+            console.log('No notification times found');
+        }
+
+        const selectedDaysAttr = form.getAttribute('data-selected-days');
+        const selectedDaysInput = document.getElementById('selectedDays');
+
+        console.log('Selected days attribute:', selectedDaysAttr);
+        console.log('Selected days input value:', selectedDaysInput ? selectedDaysInput.value : 'not found');
+
+        if (selectedDaysAttr && selectedDaysAttr !== '') {
+            existingDays = selectedDaysAttr;
+            console.log('Selected days from attribute:', existingDays);
+        } else if (selectedDaysInput && selectedDaysInput.value && selectedDaysInput.value !== '') {
+            existingDays = selectedDaysInput.value;
+            console.log('Selected days from input:', existingDays);
+        } else {
+            existingDays = '';
+        }
+    } else {
+        existingAlarms = [];
+        existingDays = '';
+    }
+
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+
+    if (startDateInput && !startDateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        startDateInput.value = today;
+
+        if (endDateInput && !endDateInput.value) {
+            const nextMonth = new Date();
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            endDateInput.value = nextMonth.toISOString().split('T')[0];
+        }
+    }
+
+    const timesList = document.getElementById('timesList');
+    if (timesList && (!existingAlarms || existingAlarms.length === 0)) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 1);
+        const defaultTime = now.toTimeString().slice(0, 5);
+        existingAlarms = [defaultTime];
+        console.log('Добавлено время уведомления по умолчанию:', defaultTime);
+    }
+
+    loadExistingTimes();
+
+    const hiddenType = document.getElementById('schemeTypeHidden');
+    if (hiddenType && hiddenType.value === 'WEEKDAYS') {
+        initDayChips();
+        highlightExistingDays();
+    } else {
+        highlightExistingDays();
+    }
 
     translateSchemeStatuses();
     translateSchemeTypes();
@@ -234,22 +340,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const selector = document.getElementById('schemeTypeSelector');
-    const hiddenType = document.getElementById('schemeTypeHidden');
 
     if (selector && hiddenType) {
         if (!hiddenType.value || hiddenType.value === 'UNSPECIFIED') {
             hiddenType.value = 'ALTERNATION';
             selector.value = 'ALTERNATION';
+        } else {
+            selector.value = hiddenType.value;
         }
     }
 
     toggleSchemeTypeFields();
-
-    loadExistingTimes();
-
-    if (hiddenType && hiddenType.value === 'WEEKDAYS') {
-        initDayChips();
-    }
 
     validateProgressBar();
 
@@ -267,30 +368,9 @@ document.addEventListener('DOMContentLoaded', function() {
             observer2.observe(bar, { attributes: true, attributeFilter: ['style'] });
         });
     }
-});
 
-const schemeTypeTranslations = {
-    'ALTERNATION': 'Чередование',
-    'WEEKDAYS': 'Дни недели',
-    'UNSPECIFIED': 'Не указан'
-};
-
-function translateSchemeTypes() {
-    const schemeTypeElements = document.querySelectorAll('.scheme-type-value');
-    schemeTypeElements.forEach(function(element) {
-        const originalType = element.getAttribute('data-scheme-type');
-        if (originalType && schemeTypeTranslations[originalType]) {
-            const translatedText = schemeTypeTranslations[originalType];
-            if (element.textContent !== translatedText) {
-                element.textContent = translatedText;
-            }
-        }
-    });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('schemeForm');
-    if (!form) return;
+    const schemeForm = document.getElementById('schemeForm');
+    if (!schemeForm) return;
 
     let alertContainer = document.querySelector('.form-card');
     if (alertContainer && !document.getElementById('duplicateErrorAlert')) {
@@ -304,16 +384,16 @@ document.addEventListener('DOMContentLoaded', function() {
             <strong>Ошибка!</strong> Схема с таким названием уже существует в профиле.
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         `;
-        alertContainer.insertBefore(alertDiv, form);
+        alertContainer.insertBefore(alertDiv, schemeForm);
     }
 
-    form.addEventListener('submit', async function(e) {
+    schemeForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        const formData = new FormData(form);
-        const url = form.action;
+        const formData = new FormData(schemeForm);
+        const url = schemeForm.action;
 
-        const submitBtn = form.querySelector('button[type="submit"]');
+        const submitBtn = schemeForm.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn.innerHTML;
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Сохранение...';
@@ -348,16 +428,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (response.redirected) {
                         window.location.href = response.url;
                     } else {
-                        const text = await response.text();
+                        await response.text();
                         window.location.href = '/schemes/all';
                     }
                 }
             } else if (response.status === 400) {
                 const errorData = await response.json().catch(() => null);
 
-                if (errorData && errorData.message &&
-                    errorData.message.includes('Схема с таким названием уже существует')) {
-
+                if (errorData && errorData.message && errorData.message.includes('Схема с таким названием уже существует')) {
                     if (alertDiv) {
                         alertDiv.style.display = 'block';
                         alertDiv.classList.add('show');
@@ -398,22 +476,6 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.innerHTML = originalBtnText;
         }
     });
-
-    function showGenericError(message) {
-        const alertDiv = document.getElementById('duplicateErrorAlert');
-        if (alertDiv) {
-            alertDiv.innerHTML = `
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                <strong>Ошибка!</strong> ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            `;
-            alertDiv.style.display = 'block';
-            alertDiv.classList.add('show');
-            alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else {
-            alert(message);
-        }
-    }
 });
 
 window.toggleSchemeTypeFields = toggleSchemeTypeFields;

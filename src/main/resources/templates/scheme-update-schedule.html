@@ -29,12 +29,21 @@
     </div>
 
     <div class="form-card">
+
         <form th:action="@{/schemes/{id}/update-schedule(id=${schemeModel.id})}"
               th:object="${schemeModel}"
               method="post"
-              id="scheduleForm">
+              id="scheduleForm"
+              th:data-notification-times="${schemeModel.alarmTimes != null ? #strings.arrayJoin(schemeModel.alarmTimes.toArray(), ',') : ''}"
+              th:data-selected-days="${schemeModel.weekdays != null ? schemeModel.weekdays.toList().toString().replace('[', '').replace(']', '').replace(' ', '') : ''}">
 
             <input type="hidden" name="schemeType" id="schemeTypeHidden" th:value="${schemeModel.schemeType}">
+
+            <input type="hidden" id="notificationTimes" name="notificationTimes"
+                   th:value="${schemeModel.alarmTimes != null ? schemeModel.alarmTimes.toString().replace('[', '').replace(']', '').replace(' ', '') : ''}">
+
+            <input type="hidden" id="selectedDays" name="selectedDays"
+                   th:value="${schemeModel.weekdays != null ? schemeModel.weekdays.toList().toString().replace('[', '').replace(']', '').replace(' ', '') : ''}">
 
             <div class="mb-group">
                 <label for="schemeTypeSelector" class="form-label">Тип расписания</label>
