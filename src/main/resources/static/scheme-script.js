@@ -287,11 +287,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const timesList = document.getElementById('timesList');
     if (timesList && (!existingAlarms || existingAlarms.length === 0)) {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() + 1);
-        const defaultTime = now.toTimeString().slice(0, 5);
-        existingAlarms = [defaultTime];
-        console.log('Добавлено время уведомления по умолчанию:', defaultTime);
+        //const now = new Date();
+        //now.setMinutes(now.getMinutes() + 1);
+        //const defaultTime = now.toTimeString().slice(0, 5);
+        existingAlarms = ['08:00:00'];
+        //console.log('Добавлено время уведомления по умолчанию:', defaultTime);
     }
 
     loadExistingTimes();
