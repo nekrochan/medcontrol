@@ -2,7 +2,7 @@ package org.medcontrol.controller;
 
 import org.medcontrol.dto.request.IntakeCleanupRequestDto;
 import org.medcontrol.dto.response.IntakeCleanupResponseDto;
-import org.medcontrol.service.impl.IntakeCleanupService;
+import org.medcontrol.service.IntakeCleanupService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

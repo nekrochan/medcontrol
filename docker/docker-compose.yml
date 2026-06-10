@@ -6,7 +6,7 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: "project_showcase"
+      POSTGRES_DB: "medcontrol"
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"
     volumes:
@@ -56,11 +56,24 @@ services:
     container_name: logstash-medcontrol
     volumes:
       - ./logstash-medcontrol.conf:/usr/share/logstash/pipeline/logstash.conf
-      - ./logs:/var/log/medcontrol
     ports:
       - "5000:5000"
     environment:
-      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+      LS_JAVA_OPTS: "-Xmx1g -Xms512m"
+      XPACK_MONITORING_ENABLED: "false"
+      CONFIG_RELOAD_AUTOMATIC: "false"
+      HTTP_HOST: "0.0.0.0"
+    entrypoint: |
+      sh -c '
+      if [ ! -f /usr/share/logstash/plugins_installed ]; then
+        echo "Installing Loki plugin..."
+        /usr/share/logstash/bin/logstash-plugin install logstash-output-loki
+        touch /usr/share/logstash/plugins_installed
+        echo "Plugin installed successfully"
+      fi
+      export LS_JAVA_OPTS="-Xmx256m -Xms256m"
+      exec /usr/share/logstash/bin/logstash
+      '
     networks:
       - monitoring
     depends_on:
@@ -72,8 +85,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '1.0'
+          memory: 1536M
 
   loki:
     image: grafana/loki:2.9.0
@@ -103,45 +116,26 @@ services:
       - loki
     restart: unless-stopped
 
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq-medcontrol
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    networks:
-      - monitoring
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: unless-stopped
-
-  medcontrol-app:
-    build:
-      context: ../
-      dockerfile: Dockerfile
-    container_name: medcontrol-app
-    ports:
-      - "8087:8087"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-medcontrol:5432/project_showcase
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
-      - SPRING_DATA_REDIS_HOST=redis-medcontrol
-      - SPRING_RABBITMQ_HOST=rabbitmq-medcontrol
-    networks:
-      - monitoring
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
-      rabbitmq:
-        condition: service_started
-    restart: unless-stopped
+#  medcontrol-app:
+#    build:
+#      context: ../
+#      dockerfile: Dockerfile
+#    container_name: medcontrol-app
+#    ports:
+#      - "8087:8087"
+#    environment:
+#      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-medcontrol:5432/medcontrol
+#      - SPRING_DATASOURCE_USERNAME=postgres
+#      - SPRING_DATASOURCE_PASSWORD=postgres
+#      - SPRING_DATA_REDIS_HOST=redis-medcontrol
+#    networks:
+#      - monitoring
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      redis:
+#        condition: service_started
+#    restart: unless-stopped
 
 networks:
   monitoring:

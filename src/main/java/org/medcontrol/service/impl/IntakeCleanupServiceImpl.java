@@ -17,13 +17,14 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-public class IntakeCleanupService {
+public class IntakeCleanupServiceImpl implements org.medcontrol.service.IntakeCleanupService {
 
-    private static final Logger log = LoggerFactory.getLogger(IntakeCleanupService.class);
+    private static final Logger log = LoggerFactory.getLogger(IntakeCleanupServiceImpl.class);
 
     @Autowired
     private IntakeRepository intakeRepository;
 
+    @Override
     public IntakeCleanupResponseDto cleanupDuplicateIntakes(String schemeId, List<String> newAlarmTimes) {
         IntakeCleanupResponseDto response = new IntakeCleanupResponseDto();
         response.setSuccess(true);
