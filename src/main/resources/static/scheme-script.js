@@ -287,11 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const timesList = document.getElementById('timesList');
     if (timesList && (!existingAlarms || existingAlarms.length === 0)) {
-        //const now = new Date();
-        //now.setMinutes(now.getMinutes() + 1);
-        //const defaultTime = now.toTimeString().slice(0, 5);
         existingAlarms = ['08:00:00'];
-        //console.log('Добавлено время уведомления по умолчанию:', defaultTime);
     }
 
     loadExistingTimes();
@@ -414,6 +410,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (response.ok) {
+                const schemeId = window.location.pathname.split('/')[2];
+                const newAlarmTimes = Array.from(document.querySelectorAll('input[name="notificationTimes"]'))
+                    .map(input => input.value)
+                    .filter(v => v && v.trim() !== '');
+                cleanupDuplicateIntakes(schemeId, newAlarmTimes);
+
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
                     const result = await response.json();
@@ -477,6 +479,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+async function cleanupDuplicateIntakes(schemeId, newAlarmTimes) {
+    try {
+        await fetch('/intakes/cleanup/after-schedule-update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ schemeId: schemeId, newAlarmTimes: newAlarmTimes })
+        });
+    } catch (error) {
+        console.error('Очистка не удалась:', error);
+    }
+}
 
 window.toggleSchemeTypeFields = toggleSchemeTypeFields;
 window.initDayChips = initDayChips;

@@ -5,5 +5,6 @@ public enum IntakeStatus {
     TAKEN,
     MOVED,
     CANCELLED,
-    PAUSED
+    PAUSED,
+    DELETING
 }
